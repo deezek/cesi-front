@@ -1,4 +1,4 @@
-import React,{useState} from 'react'
+import React, { useState, useEffect } from 'react';
 // Import the main component
 import { Viewer } from '@react-pdf-viewer/core'; // install this library
 // Plugins
@@ -8,49 +8,74 @@ import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 // Worker
 import { Worker } from '@react-pdf-viewer/core'; // install this library
+import axios from 'axios';
+
 
 export const App = () => {
+  const [url, setData] = useState("");
 
-  // Create new plugin instance
-  const defaultLayoutPluginInstance = defaultLayoutPlugin();
-  
-  // for onchange event
-  const [pdfFile, setPdfFile]=useState(null);
-  const [pdfFileError, setPdfFileError]=useState('');
+   // Create new plugin instance
+   const defaultLayoutPluginInstance = defaultLayoutPlugin();
 
-  // for submit event
-  const [viewPdf, setViewPdf]=useState(null);
+   // for onchange event
+   const [pdfFile, setPdfFile] = useState(null);
+   const [pdfFileError, setPdfFileError] = useState('');
+ 
+   // for submit event
+   const [viewPdf, setViewPdf] = useState(null);
+
+  useEffect(() => {
+    
+    var config = {
+      method: 'get',
+      url: 'http://localhost:1337/ressources/'+JSON.parse(window.sessionStorage.getItem('art')),
+      headers: {}
+    };
+
+    axios(config)
+      .then(function (response) {
+        //console.log(JSON.stringify(response.data));
+        setViewPdf("http://localhost:1337"+response.data.fichier[0].url)
+        //console.log(url)
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  });
+
+ 
 
   // onchange event
-  const fileType=['application/pdf'];
-  const handlePdfFileChange=(e)=>{
-    let selectedFile=e.target.files[0];
-    if(selectedFile){
-      if(selectedFile&&fileType.includes(selectedFile.type)){
+  const fileType = ['application/pdf'];
+  const handlePdfFileChange = (e) => {
+    let selectedFile = e.target.files[0];
+    console.log(selectedFile, "selection")
+    if (selectedFile) {
+      if (selectedFile && fileType.includes(selectedFile.type)) {
         let reader = new FileReader();
-            reader.readAsDataURL(selectedFile);
-            reader.onloadend = (e) =>{
-              setPdfFile(e.target.result);
-              setPdfFileError('');
-            }
+        reader.readAsDataURL(selectedFile);
+        reader.onloadend = (e) => {
+          setPdfFile(e.target.result);
+          setPdfFileError('');
+        }
       }
-      else{
+      else {
         setPdfFile(null);
         setPdfFileError('Please select valid pdf file');
       }
     }
-    else{
+    else {
       console.log('select your file');
     }
   }
 
   // form submit
-  const handlePdfFileSubmit=(e)=>{
+  const handlePdfFileSubmit = (e) => {
     e.preventDefault();
-    if(pdfFile!==null){
+    if (pdfFile !== null) {
       setViewPdf(pdfFile);
     }
-    else{
+    else {
       setViewPdf(null);
     }
   }
@@ -58,29 +83,29 @@ export const App = () => {
   return (
     <div className='container'>
 
-    <br></br>
-    
-      <form className='form-group' onSubmit={handlePdfFileSubmit}>
+      <br></br>
+
+      {/* <form className='form-group' onSubmit={handlePdfFileSubmit}>
         <input type="file" className='form-control'
           required onChange={handlePdfFileChange}
         />
-        {pdfFileError&&<div className='error-msg'>{pdfFileError}</div>}
+        {pdfFileError && <div className='error-msg'>{pdfFileError}</div>}
         <br></br>
         <button type="submit" className='btn btn-success btn-lg'>
           UPLOAD
         </button>
-      </form>
-      <br></br>
-      <h4>View PDF</h4>
-      <div className='pdf-container'>
+      </form> */}
+      {/* <br></br>
+      <h4>View PDF</h4> */}
+      <div>
         {/* show pdf conditionally (if we have one)  */}
-        {viewPdf&&<><Worker workerUrl="https://unpkg.com/pdfjs-dist@2.6.347/build/pdf.worker.min.js">
+        {viewPdf && <><Worker workerUrl="https://unpkg.com/pdfjs-dist@2.6.347/build/pdf.worker.min.js">
           <Viewer fileUrl={viewPdf}
             plugins={[defaultLayoutPluginInstance]} />
-      </Worker></>}
+        </Worker></>}
 
-      {/* if we dont have pdf or viewPdf state is null */}
-      {!viewPdf&&<>No pdf file selected</>}
+        {/* if we dont have pdf or viewPdf state is null */}
+        {!viewPdf && <>No pdf file selected</>}
       </div>
 
     </div>
